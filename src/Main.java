@@ -8,7 +8,12 @@ import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) throws IOException, Exception {
-        runCode("((print \"foobar\"))");
+        if (args.length == 1) {
+            Path codePath = Path.of(args[0]);
+            runCode(Files.readString(codePath));
+        } else {
+            System.err.println("Usage: wassail <code_path>");
+        }
     }
 
     public static void runCode(String code) throws IOException, Exception {

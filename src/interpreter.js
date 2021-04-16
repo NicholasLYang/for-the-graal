@@ -14,6 +14,9 @@ function evalProgram(opcodes) {
             case "ident":
                 stack.push(opcodes.pop());
                 break;
+            case "var":
+                stack.push(bindings.get(opcodes.pop()));
+                break;
             case "+": {
                 const lhs = stack.pop();
                 const rhs = stack.pop();
@@ -29,7 +32,7 @@ function evalProgram(opcodes) {
             case "*": {
                 const lhs = stack.pop();
                 const rhs = stack.pop();
-                stack.push(lhs - rhs);
+                stack.push(lhs * rhs);
                 break;
             }
             case "/": {

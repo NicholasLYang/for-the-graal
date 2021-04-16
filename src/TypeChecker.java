@@ -13,6 +13,7 @@ public class TypeChecker {
 
     public TypeChecker() {
         opcodes = new ArrayList<>();
+        symbolTable = new HashMap<>();
     }
 
     public ArrayList<String> checkProgram(Value program) throws Exception {
@@ -20,13 +21,23 @@ public class TypeChecker {
             throw new Exception("Program must be array");
         }
         var len = program.getArraySize();
+        var stmtOpCodes = new ArrayList<ArrayList<String>>();
+
+        // We add each stmt's opcodes as a separate ArrayList...
         for (var i = 0; i < len; i++) {
-            checkStmt(program.getArrayElement(i));
+            stmtOpCodes.add(checkStmt(program.getArrayElement(i)));
         }
+
+        // ...so that we can reverse the stmt order for the interpreter
+        var opcodes = new ArrayList<String>();
+        for (int j = (int)len - 1; j >= 0; j--) {
+            opcodes.addAll(stmtOpCodes.get(j));
+        }
+
         return opcodes;
     }
 
-    public void checkStmt(Value stmt) throws Exception {
+    public ArrayList<String> checkStmt(Value stmt) throws Exception {
         if (!stmt.hasArrayElements()) {
             throw new Exception("Program cannot have top level values");
         }
@@ -69,6 +80,9 @@ public class TypeChecker {
             default:
 				throw new Exception("Operator " + opString + " not defined");
         }
+        var opcodes = this.opcodes;
+        this.opcodes = new ArrayList<>();
+        return opcodes;
     }
 
     public Type checkExpr(Value expr) throws Exception {
@@ -77,6 +91,17 @@ public class TypeChecker {
 		        opcodes.add(String.valueOf(expr.asDouble()));
                 opcodes.add("number");
                 return Type.NUMBER;
+            }
+
+		    if (expr.isString()) {
+                var varName = expr.asString();
+		        Type varType = symbolTable.get(varName);
+		        if (varType == null) {
+		            throw new Exception("Variable `" + varName + "' not defined");
+                }
+		        opcodes.add(varName);
+		        opcodes.add("var");
+		        return varType;
             }
         }
         var operator = expr.getArrayElement(0);
