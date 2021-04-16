@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 enum Type {
-    NUMBER, STRING, BOOL
+    NUMBER, STRING
 }
 
 public class TypeChecker {
@@ -92,7 +92,7 @@ public class TypeChecker {
                 opcodes.add("number");
                 return Type.NUMBER;
             }
-
+            // If it's just a naked string, it's a variable
 		    if (expr.isString()) {
                 var varName = expr.asString();
 		        Type varType = symbolTable.get(varName);
@@ -119,19 +119,23 @@ public class TypeChecker {
             return Type.STRING;
         }
 
+        return checkBinaryExpr(opString, expr);
+    }
+
+    Type checkBinaryExpr(String op, Value expr) throws Exception {
         if (expr.getArraySize() != 3) {
             throw new Exception("Only binary operations are supported");
         }
-        if (!(opString.equals("+") || opString.equals("-") || opString.equals("*") || opString.equals("/"))) {
-                throw new Exception("Invalid operator: " + opString);
+        if (!(op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/"))) {
+            throw new Exception("Invalid operator: " + op);
         }
 
-        opcodes.add(opString);
+        opcodes.add(op);
         var lhsType = checkExpr(expr.getArrayElement(1));
         var rhsType = checkExpr(expr.getArrayElement(2));
 
         if (!(lhsType == Type.NUMBER && rhsType == Type.NUMBER)) {
-            throw new Exception("Invalid operator " + opString + " for types " + lhsType + " and " + rhsType);
+            throw new Exception("Invalid operator " + op + " for types " + lhsType + " and " + rhsType);
         }
 
 
