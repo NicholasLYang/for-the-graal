@@ -12,7 +12,7 @@ public class Main {
             Path codePath = Path.of(args[0]);
             runCode(Files.readString(codePath));
         } else {
-            System.err.println("Usage: wassail <code_path>");
+            System.err.println("Usage: ftg <code_path>");
         }
     }
 
@@ -30,11 +30,11 @@ public class Main {
     public static Context setupContext() throws IOException {
         Context context = Context.newBuilder().allowAllAccess(true).build();
 
-        Path parserPath = Path.of("parser.rb");
+        Path parserPath = Path.of("src/parser.rb");
         String rubySourceCode = Files.readString(parserPath);
         context.eval("ruby", rubySourceCode);
 
-        Path interpreterPath = Path.of("interpreter.js");
+        Path interpreterPath = Path.of("src/interpreter.js");
         String jsInterpreterCode = Files.readString(interpreterPath);
         context.eval("js", jsInterpreterCode);
 
