@@ -3,30 +3,38 @@ require 'sxp'
 def parse_program(program)
   cst = SXP.read program
 
-  desugar_operator cst
+  quote_strings (desugar_operator cst)
 end
 
-def desugar_operator(cst)
-  op = cst[0]
+def quote_strings(program)
+  program.map do |elem|
+    if elem.is_a?(Array)
+      quote_strings(elem)
+    elsif elem.is_a?(String)
+      [:quote, elem]
+    else
+      elem
+    end
+  end
+end
+
+def desugar_operator(program)
+  op = program[0]
 
   if op == :+ || op == :- || op == :/ || op == :*
     # If we have a binary op with more than two args
     # we convert it to a nested form with the same binary
     # op
-    if cst.length > 3
-      cst[2] = [cst[0], *cst[2..-1]]
-      desugar_operator(cst[2])
+    if program.length > 3
+      program[2] = desugar_operator([program[0], *program[2..-1]])
     end
-    cst.take(3)
+    program.take(3)
   else
-    cst[1..-1].each_with_index do |e, i|
+    program.each_with_index do |e, i|
       if e.is_a?(Array)
-        cst[i + 1] = desugar_operator(e)
+        program[i] = desugar_operator(e)
       end
     end
-    cst
+    program
   end
 end
-
-
-p parse_program "(let a (+ 10 11 12))"
