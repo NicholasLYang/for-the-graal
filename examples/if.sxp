@@ -1,4 +1,4 @@
 (
- (if true (print "foo") (print "bar"))
- (if (== 10 11) (print "10 == 11") (print "10 != 11"))
+ (let n 10)
+ (if (> n 5) (if (< n 10) (print "5 < n < 10") (print "5 < n")) (print "5 > n"))
 )

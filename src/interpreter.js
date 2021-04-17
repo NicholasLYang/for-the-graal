@@ -1,7 +1,4 @@
 function evalProgram(opcodes, stack = [], bindings = new Map(), depth = 0) {
-    if (depth === 0) {
-        console.log(opcodes);
-    }
     while (opcodes.length > 0) {
         const opcode = opcodes.pop();
         switch (opcode) {
@@ -42,6 +39,8 @@ function evalProgram(opcodes, stack = [], bindings = new Map(), depth = 0) {
                 break;
             case "else":
                 throw "else";
+            case "end":
+                throw "end";
             case "==": {
                 const lhs = stack.pop();
                 const rhs = stack.pop();
@@ -113,5 +112,8 @@ function evalProgram(opcodes, stack = [], bindings = new Map(), depth = 0) {
                 break;
             }
         }
+    }
+    if (depth > 0) {
+        throw new Error("Depth should be 0 at end of opcodes, instead is " + depth);
     }
 }
