@@ -13,7 +13,7 @@ to install `sxp`.
 
 Compiling is simply:
 ```
-javac -classpath src/ src/Main.java
+javac -Xlint:unchecked -classpath src/ src/Main.java
 ```
 and running:
 ```

@@ -1,4 +1,4 @@
-function evalProgram(opcodes, stack = [], bindings = new Map(), depth = 0) {
+function evalProgram(opcodes, functions, stack = [], bindings = new Map(), depth = 0) {
     while (opcodes.length > 0) {
         const opcode = opcodes.pop();
         switch (opcode) {
@@ -17,30 +17,35 @@ function evalProgram(opcodes, stack = [], bindings = new Map(), depth = 0) {
             case "var":
                 stack.push(bindings.get(opcodes.pop()));
                 break;
+            case "call": {
+                const name = stack.pop();
+                const fun = functions.get(name);
+                const newBindings = new Map(bindings);
+                for (const param of fun.params) {
+                    newBindings.set(param, stack.pop());
+                }
+                try {
+                    evalProgram([...fun.body], functions, stack, newBindings, depth + 1);
+                } catch (e) {
+                    stack.push(e);
+                }
+                break;
+            }
+            case "return":
+                throw stack.pop()
             case "if":
                 const cond = stack.pop();
                 if (cond) {
-                    try {
-                        evalProgram(opcodes, stack, bindings, depth + 1);
-                    } catch (e) {
-                        if (e === "else") {
-                            while (opcodes.pop() !== "end") {}
-                        }
-                    }
+                    evalProgram(opcodes, functions, stack, bindings, depth + 1);
                 } else {
                     while (opcodes.pop() !== "else") {}
-                    try {
-                        evalProgram(opcodes, stack, bindings, depth + 1);
-                    } catch (e) {
-                        // We threw because end
-                    }
+                    evalProgram(opcodes, functions, stack, bindings, depth + 1);
                 }
 
                 break;
             case "else":
-                throw "else";
             case "end":
-                throw "end";
+                return;
             case "==": {
                 const lhs = stack.pop();
                 const rhs = stack.pop();
@@ -110,6 +115,9 @@ function evalProgram(opcodes, stack = [], bindings = new Map(), depth = 0) {
                 const value = stack.pop();
                 bindings.set(ident, value);
                 break;
+            }
+            default: {
+                throw new Error("Unexpected opcode: " + opcode)
             }
         }
     }

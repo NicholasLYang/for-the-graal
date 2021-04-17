@@ -22,9 +22,10 @@ public class Main {
         Value program = context.eval("ruby", "parse_program '" + code + "'");
 
         var typeChecker = new TypeChecker();
-        var opcodes = typeChecker.checkProgram(program);
+        var compiledProgram = typeChecker.checkProgram(program);
+        var jsCode = compiledProgram.createJavaScriptCode();
 
-        context.eval("js", createJavaScriptCode(opcodes));
+        context.eval("js", jsCode);
     }
 
     public static Context setupContext() throws IOException {
@@ -39,17 +40,6 @@ public class Main {
         context.eval("js", jsInterpreterCode);
 
         return context;
-    }
-
-    public static String createJavaScriptCode(ArrayList<String> opcodes) {
-        var code = new StringBuilder("evalProgram([");
-        for (String opcode : opcodes) {
-            code.append("\"");
-            code.append(opcode);
-            code.append("\",");
-        }
-        code.append("]);");
-        return code.toString();
     }
 
     public static void printProgram(Value program) {

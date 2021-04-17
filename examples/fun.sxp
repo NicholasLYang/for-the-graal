@@ -1,0 +1,6 @@
+(
+  (fun foo ((a number) (b number) (c number)) (+ a b c))
+  (print (foo 20 21 22))
+  (fun bar ((d number)) (* d (foo 10 11 12)))
+  (print (bar 100))
+)
