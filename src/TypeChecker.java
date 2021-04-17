@@ -21,6 +21,7 @@ public class TypeChecker {
     ArrayList<String> opcodes;
     HashMap<String, Type> symbolTable;
     HashMap<String, Function> functions;
+    Type currentReturnType;
 
     public TypeChecker() {
         this.opcodes = new ArrayList<>();
@@ -29,8 +30,13 @@ public class TypeChecker {
     }
 
     public Program checkProgram(Value program) throws Exception {
+        var opcodes = this.checkBlock(program);
+        return new Program(opcodes, this.functions);
+    }
+
+    public ArrayList<String> checkBlock(Value program) throws Exception {
         if (!program.hasArrayElements()) {
-            throw new Exception("Program must be array");
+            throw new Exception("Block must be list of statements");
         }
         var len = program.getArraySize();
         var stmtOpCodes = new ArrayList<ArrayList<String>>();
@@ -46,7 +52,7 @@ public class TypeChecker {
             opcodes.addAll(stmtOpCodes.get(j));
         }
 
-        return new Program(opcodes, this.functions);
+        return opcodes;
     }
 
     public ArrayList<String> checkStmt(Value stmt, boolean isTopLevel) throws Exception {
@@ -92,6 +98,20 @@ public class TypeChecker {
                 checkExpr(stmt.getArrayElement(1));
                 break;
             }
+            case "return": {
+                if (stmt.getArraySize() != 2) {
+                    throw new Exception("Return statements must take exactly one argument");
+                }
+                if (this.currentReturnType == null) {
+                    throw new Exception("Cannot return at top level");
+                }
+                this.opcodes.add("return");
+                Type type = checkExpr(stmt.getArrayElement(1));
+                if (type != this.currentReturnType) {
+                    throw new Exception("Expected return type of " + this.currentReturnType + "received " + type);
+                }
+                break;
+            }
             case "if": {
                 if (stmt.getArraySize() < 3 || stmt.getArraySize() > 4) {
                     throw new Exception("If statements must take a condition, a then block and an optional else block");
@@ -130,8 +150,8 @@ public class TypeChecker {
     }
 
     public void checkFunction(Value fun) throws Exception {
-        if (fun.getArraySize() != 4) {
-            throw new Exception("fun take three arguments: name, parameters and body");
+        if (fun.getArraySize() != 5) {
+            throw new Exception("fun take four arguments: name, parameters, return type and body");
         }
 
         var funName = fun.getArrayElement(1);
@@ -164,7 +184,7 @@ public class TypeChecker {
             var paramName = param.getArrayElement(0);
             var paramType = param.getArrayElement(1);
             if (paramName.isString() && paramType.isString()) {
-                var parsedParamType = parseParamType(paramType.asString());
+                var parsedParamType = parseType(paramType.asString());
                 this.symbolTable.put(paramName.asString(), parsedParamType);
                 paramsList.add(new Param(paramName.asString(), parsedParamType));
             } else {
@@ -172,15 +192,26 @@ public class TypeChecker {
             }
         }
 
-        this.opcodes.add("return");
-        var returnType = checkExpr(fun.getArrayElement(3));
+        var returnType = fun.getArrayElement(3);
+        if (!returnType.isString()) {
+            throw new Exception("Return type must be an identifier");
+        }
+
+        this.opcodes.add("return_type");
+        this.currentReturnType = this.parseType(returnType.asString());
+        // Put in a temp version for recursion
+        this.functions.put(funName.asString(), new Function(null, paramsList, this.currentReturnType));
+
+        var funBody = this.checkBlock(fun.getArrayElement(4));
+
+        this.functions.put(funName.asString(), new Function(funBody, paramsList, this.currentReturnType));
         this.symbolTable = oldSymbolTable;
 
-        this.functions.put(funName.asString(), new Function(this.opcodes, paramsList, returnType));
+        this.currentReturnType = null;
     }
 
-    public Type parseParamType(String paramType) throws Exception {
-        switch (paramType) {
+    public Type parseType(String typeString) throws Exception {
+        switch (typeString) {
             case "bool":
                 return Type.BOOLEAN;
             case "number":
@@ -188,7 +219,7 @@ public class TypeChecker {
             case "string":
                 return Type.STRING;
             default:
-                throw new Exception("Invalid type " + paramType);
+                throw new Exception("Invalid type " + typeString);
         }
     }
 

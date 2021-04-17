@@ -1,6 +1,6 @@
 (
-  (fun foo ((a number) (b number) (c number)) (+ a b c))
+  (fun foo ((a number) (b number) (c number)) number ((return (+ a b c))) )
   (print (foo 20 21 22))
-  (fun bar ((d number)) (* d (foo 10 11 12)))
+  (fun bar ((d number)) number ((return (* d (foo 10 11 12)))) )
   (print (bar 100))
 )
