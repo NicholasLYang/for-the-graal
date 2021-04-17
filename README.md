@@ -23,5 +23,7 @@ java -classpath src/ Main <source_file>
 Where `<source_file>` is a file containing the source code. 
 Check out `examples/` for, well, examples.
 
+`javac` and `java` must be the Graal versions, of course.
+
 NOTE: You must run the code from the root directory as it loads files
 via relative paths.

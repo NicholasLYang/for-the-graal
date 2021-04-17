@@ -1,0 +1,4 @@
+(
+ (if true (print "foo") (print "bar"))
+ (if (== 10 11) (print "10 == 11") (print "10 != 11"))
+)

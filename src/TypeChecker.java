@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 enum Type {
-    NUMBER, STRING
+    NUMBER, STRING, BOOLEAN
 }
 
 public class TypeChecker {
@@ -38,6 +38,9 @@ public class TypeChecker {
     }
 
     public ArrayList<String> checkStmt(Value stmt) throws Exception {
+        var oldOpcodes = this.opcodes;
+        opcodes = new ArrayList<>();
+
         if (!stmt.hasArrayElements()) {
             throw new Exception("Program cannot have top level values");
         }
@@ -77,11 +80,29 @@ public class TypeChecker {
                 checkExpr(stmt.getArrayElement(1));
                 break;
             }
+            case "if": {
+                if (stmt.getArraySize() < 3 || stmt.getArraySize() > 4) {
+                    throw new Exception("If statements must take a condition, a then block and an optional else block");
+                }
+
+                opcodes.add("end");
+                if (stmt.getArraySize() == 4) {
+                    var elseOpcodes = checkStmt(stmt.getArrayElement(3));
+                    opcodes.addAll(elseOpcodes);
+                }
+                opcodes.add("else");
+                var thenOpcodes = checkStmt(stmt.getArrayElement(2));
+                opcodes.addAll(thenOpcodes);
+                opcodes.add("if");
+                checkExpr(stmt.getArrayElement(1));
+
+                break;
+            }
             default:
 				throw new Exception("Operator " + opString + " not defined");
         }
         var opcodes = this.opcodes;
-        this.opcodes = new ArrayList<>();
+        this.opcodes = oldOpcodes;
         return opcodes;
     }
 
@@ -95,6 +116,11 @@ public class TypeChecker {
             // If it's just a naked string, it's a variable
 		    if (expr.isString()) {
                 var varName = expr.asString();
+                if (varName.equals("true") || varName.equals("false")) {
+                    opcodes.add(varName);
+                    opcodes.add("bool");
+                    return Type.BOOLEAN;
+                }
 		        Type varType = symbolTable.get(varName);
 		        if (varType == null) {
 		            throw new Exception("Variable `" + varName + "' not defined");
@@ -126,19 +152,43 @@ public class TypeChecker {
         if (expr.getArraySize() != 3) {
             throw new Exception("Only binary operations are supported");
         }
-        if (!(op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/"))) {
-            throw new Exception("Invalid operator: " + op);
-        }
 
         opcodes.add(op);
         var lhsType = checkExpr(expr.getArrayElement(1));
         var rhsType = checkExpr(expr.getArrayElement(2));
 
-        if (!(lhsType == Type.NUMBER && rhsType == Type.NUMBER)) {
-            throw new Exception("Invalid operator " + op + " for types " + lhsType + " and " + rhsType);
+        Type type;
+        switch (op) {
+            case "+":
+            case "-":
+            case "*":
+            case "/":
+                if (lhsType != Type.NUMBER || rhsType != Type.NUMBER) {
+                    throw new Exception("Invalid operator " + op + " for types " + lhsType + " and " + rhsType);
+                }
+                type = Type.NUMBER;
+                break;
+            case "==":
+            case "!=":
+                if (!(lhsType == Type.NUMBER && rhsType == Type.NUMBER) &&
+                        !(lhsType == Type.STRING && rhsType == Type.STRING)) {
+                    throw new Exception("Invalid operator " + op + " for types " + lhsType + " and " + rhsType);
+                }
+                type = Type.BOOLEAN;
+                break;
+            case ">=":
+            case "<=":
+            case ">":
+            case "<":
+                if (lhsType != Type.NUMBER || rhsType != Type.NUMBER) {
+                    throw new Exception("Invalid operator " + op + " for types " + lhsType + " and " + rhsType);
+                }
+                type = Type.BOOLEAN;
+                break;
+            default:
+                throw new Exception("Invalid operator " + op + " for types " + lhsType + " and " + rhsType);
         }
 
-
-        return Type.NUMBER;
+        return type;
     }
 }
