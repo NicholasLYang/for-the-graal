@@ -14,10 +14,15 @@ A program consists of a list of statements. Currently, there are functions,
 The language supports numbers (double precision floating point), strings and bools.
 
 Functions are defined using `fun`. They take in a name, a list of params,
-and a body expression. Params are a name/type pair.
+and a body. Params are a name/type pair. The function body is a list of
+statements.
 ```
 (
-  (fun foo ((n number) (b number)) (* n b))
+  (fun foo ((n number) (b number)) 
+    (
+      (print (* n b))
+    )
+  )
 )
 ```
 
