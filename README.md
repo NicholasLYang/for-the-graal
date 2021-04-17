@@ -40,6 +40,8 @@ If statements are defined using `if`. They take in a condition, and
 a then block with an optional else block.
 ```
 (
+  (if (< 10 20) (print "10 < 20"))
+  (if (< 21 20) (print "21 < 20") (print "21 > 20"))
 )
 ```
 ## Running
