@@ -37,6 +37,7 @@ function evalProgram(opcodes, functions, stack = [], bindings = new Map(), depth
                 const cond = stack.pop();
                 if (cond) {
                     evalProgram(opcodes, functions, stack, bindings, depth + 1);
+                    while (opcodes.pop() !== "end") {}
                 } else {
                     while (opcodes.pop() !== "else") {}
                     evalProgram(opcodes, functions, stack, bindings, depth + 1);

@@ -106,7 +106,11 @@ public class TypeChecker {
                 var thenOpcodes = checkStmt(stmt.getArrayElement(2), false);
                 this.opcodes.addAll(thenOpcodes);
                 this.opcodes.add("if");
-                checkExpr(stmt.getArrayElement(1));
+                Type condType = checkExpr(stmt.getArrayElement(1));
+
+                if (condType != Type.BOOLEAN) {
+                    throw new Exception("Condition in if statement must be BOOLEAN, instead is " + condType);
+                }
 
                 break;
             }
